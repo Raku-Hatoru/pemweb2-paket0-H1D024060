@@ -1,3 +1,9 @@
+CREATE DATABASE IF NOT EXISTS perpustakaan
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+USE perpus;
+
 CREATE TABLE users (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
@@ -8,6 +14,38 @@ CREATE TABLE users (
     remember_token VARCHAR(100) NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL
+);
+
+CREATE TABLE password_reset_tokens (
+    email VARCHAR(150) PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NULL
+);
+
+CREATE TABLE sessions (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    payload LONGTEXT NOT NULL,
+    last_activity INT NOT NULL,
+    INDEX sessions_user_id_index (user_id),
+    INDEX sessions_last_activity_index (last_activity),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE cache (
+    `key` VARCHAR(255) PRIMARY KEY,
+    `value` MEDIUMTEXT NOT NULL,
+    expiration BIGINT NOT NULL,
+    INDEX cache_expiration_index (expiration)
+);
+
+CREATE TABLE cache_locks (
+    `key` VARCHAR(255) PRIMARY KEY,
+    owner VARCHAR(255) NOT NULL,
+    expiration BIGINT NOT NULL,
+    INDEX cache_locks_expiration_index (expiration)
 );
 
 CREATE TABLE categories (
