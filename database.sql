@@ -1,8 +1,14 @@
-CREATE DATABASE IF NOT EXISTS perpustakaan
+CREATE DATABASE IF NOT EXISTS db_perpus
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
-USE perpus;
+USE db_perpus;
+
+CREATE TABLE migrations (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    migration VARCHAR(255) NOT NULL,
+    batch INT NOT NULL
+);
 
 CREATE TABLE users (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -46,6 +52,40 @@ CREATE TABLE cache_locks (
     owner VARCHAR(255) NOT NULL,
     expiration BIGINT NOT NULL,
     INDEX cache_locks_expiration_index (expiration)
+);
+
+CREATE TABLE jobs (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    queue VARCHAR(255) NOT NULL,
+    payload LONGTEXT NOT NULL,
+    attempts TINYINT UNSIGNED NOT NULL,
+    reserved_at INT UNSIGNED NULL,
+    available_at INT UNSIGNED NOT NULL,
+    created_at INT UNSIGNED NOT NULL,
+    INDEX jobs_queue_index (queue)
+);
+
+CREATE TABLE job_batches (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    total_jobs INT NOT NULL,
+    pending_jobs INT NOT NULL,
+    failed_jobs INT NOT NULL,
+    failed_job_ids LONGTEXT NOT NULL,
+    options MEDIUMTEXT NULL,
+    cancelled_at INT NULL,
+    created_at INT NOT NULL,
+    finished_at INT NULL
+);
+
+CREATE TABLE failed_jobs (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    uuid VARCHAR(255) UNIQUE NOT NULL,
+    connection TEXT NOT NULL,
+    queue TEXT NOT NULL,
+    payload LONGTEXT NOT NULL,
+    exception LONGTEXT NOT NULL,
+    failed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE categories (
@@ -106,3 +146,10 @@ CREATE TABLE borrowing_items (
     FOREIGN KEY (borrowing_id) REFERENCES borrowings(id) ON DELETE CASCADE,
     FOREIGN KEY (book_id) REFERENCES books(id)
 );
+
+INSERT INTO migrations (migration, batch) VALUES
+    ('0001_01_01_000000_create_users_table', 1),
+    ('0001_01_01_000001_create_cache_table', 1),
+    ('0001_01_01_000002_create_jobs_table', 1),
+    ('2026_04_19_120323_add_role_to_users_table', 1),
+    ('2026_04_19_145202_sync_imported_database_with_framework_tables', 1);
