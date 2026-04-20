@@ -11,6 +11,7 @@ use App\Models\Member;
 use App\Models\User;
 use App\UserRole;
 use Carbon\CarbonInterface;
+use Database\Seeders\LibraryDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -65,5 +66,54 @@ class LibraryModelsTest extends TestCase
         $this->assertTrue($book->borrowings->first()->is($borrowing));
         $this->assertTrue($borrowing->member->borrowingItems->first()->is($item));
         $this->assertSame(2, $item->fresh()->qty);
+    }
+
+    public function test_library_demo_seeder_creates_repeatable_demo_data(): void
+    {
+        $this->seed(LibraryDemoSeeder::class);
+        $this->seed(LibraryDemoSeeder::class);
+
+        $admin = User::query()->where('email', 'admin@perpus.test')->first();
+        $memberUser = User::query()->where('email', 'anggota@perpus.test')->first();
+        $member = Member::query()->where('member_code', 'AGT-0001')->first();
+        $webCategory = Category::query()->where('slug', 'pemrograman-web')->first();
+        $laravelBook = Book::query()->where('isbn', '9786020000011')->first();
+
+        $this->assertNotNull($admin);
+        $this->assertNotNull($memberUser);
+        $this->assertNotNull($member);
+        $this->assertNotNull($webCategory);
+        $this->assertNotNull($laravelBook);
+
+        $member->load('borrowings');
+        $memberUser->load('member');
+        $laravelBook->load('category');
+
+        $completedBorrowing = $member->borrowings()
+            ->whereDate('borrow_date', '2026-04-10')
+            ->with('borrowingItems')
+            ->first();
+
+        $activeBorrowing = $member->borrowings()
+            ->whereDate('borrow_date', '2026-04-18')
+            ->with('borrowingItems')
+            ->first();
+
+        $this->assertSame(2, User::query()->count());
+        $this->assertSame(1, Member::query()->count());
+        $this->assertSame(2, Category::query()->count());
+        $this->assertSame(2, Book::query()->count());
+        $this->assertSame(2, Borrowing::query()->count());
+        $this->assertSame(2, BorrowingItem::query()->count());
+        $this->assertSame(UserRole::Admin, $admin->role);
+        $this->assertSame(UserRole::Anggota, $memberUser->role);
+        $this->assertTrue($memberUser->member->is($member));
+        $this->assertSame('Pemrograman Web', $webCategory->name);
+        $this->assertSame('Laravel untuk Sistem Informasi', $laravelBook->title);
+        $this->assertTrue($laravelBook->category->is($webCategory));
+        $this->assertSame(BorrowingStatus::Dikembalikan, $completedBorrowing?->status);
+        $this->assertSame(BorrowingStatus::Dipinjam, $activeBorrowing?->status);
+        $this->assertCount(1, $completedBorrowing?->borrowingItems ?? []);
+        $this->assertCount(1, $activeBorrowing?->borrowingItems ?? []);
     }
 }

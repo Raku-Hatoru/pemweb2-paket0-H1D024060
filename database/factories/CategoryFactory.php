@@ -25,4 +25,26 @@ class CategoryFactory extends Factory
             'slug' => Str::slug($name),
         ];
     }
+
+    /**
+     * Indicate that the category is the seeded web programming category.
+     */
+    public function webProgramming(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'name' => 'Pemrograman Web',
+            'slug' => 'pemrograman-web',
+        ]);
+    }
+
+    /**
+     * Indicate that the category is the seeded database category.
+     */
+    public function database(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'name' => 'Basis Data',
+            'slug' => 'basis-data',
+        ]);
+    }
 }

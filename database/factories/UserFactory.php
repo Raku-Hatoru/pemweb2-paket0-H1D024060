@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
+    private const string DEMO_PASSWORD = 'password123';
+
     /**
      * The current password being used by the factory.
      */
@@ -42,6 +44,45 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an administrator.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'role' => UserRole::Admin,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is the seeded demo admin account.
+     */
+    public function demoAdmin(): static
+    {
+        return $this->admin()->state(fn (array $attributes): array => [
+            'name' => 'Admin Perpustakaan',
+            'email' => 'admin@perpus.test',
+            'email_verified_at' => now(),
+            'password' => Hash::make(self::DEMO_PASSWORD),
+            'remember_token' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is the seeded demo member account.
+     */
+    public function demoMember(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'name' => 'Anggota Demo',
+            'email' => 'anggota@perpus.test',
+            'email_verified_at' => now(),
+            'password' => Hash::make(self::DEMO_PASSWORD),
+            'role' => UserRole::Anggota,
+            'remember_token' => null,
         ]);
     }
 }

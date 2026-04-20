@@ -25,4 +25,16 @@ class MemberFactory extends Factory
             'address' => fake()->address(),
         ];
     }
+
+    /**
+     * Indicate that the member is the seeded demo member.
+     */
+    public function demo(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'member_code' => 'AGT-0001',
+            'phone' => '081234567890',
+            'address' => 'Purwokerto',
+        ]);
+    }
 }

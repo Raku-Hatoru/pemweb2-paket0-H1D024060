@@ -29,4 +29,36 @@ class BookFactory extends Factory
             'cover_image' => null,
         ];
     }
+
+    /**
+     * Indicate that the book is the seeded Laravel demo title.
+     */
+    public function laravelInformationSystem(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'isbn' => '9786020000011',
+            'title' => 'Laravel untuk Sistem Informasi',
+            'author' => 'Tim Dosen Teknik',
+            'publisher' => 'FT Press',
+            'year_published' => 2024,
+            'stock' => 5,
+            'cover_image' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the book is the seeded database demo title.
+     */
+    public function libraryDatabaseDesign(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'isbn' => '9786020000012',
+            'title' => 'Desain Basis Data Perpustakaan',
+            'author' => 'Laboratorium Data',
+            'publisher' => 'FT Press',
+            'year_published' => 2023,
+            'stock' => 3,
+            'cover_image' => null,
+        ]);
+    }
 }

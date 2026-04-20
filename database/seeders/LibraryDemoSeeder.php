@@ -3,11 +3,15 @@
 namespace Database\Seeders;
 
 use App\BorrowingStatus;
-use App\UserRole;
+use App\Models\Book;
+use App\Models\Borrowing;
+use App\Models\Category;
+use App\Models\Member;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class LibraryDemoSeeder extends Seeder
 {
@@ -19,103 +23,64 @@ class LibraryDemoSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function (): void {
-            DB::table('users')->updateOrInsert(
+            User::query()->updateOrCreate(
                 ['email' => 'admin@perpus.test'],
-                [
-                    'name' => 'Admin Perpustakaan',
-                    'password' => Hash::make('password123'),
-                    'role' => UserRole::Admin->value,
-                    'email_verified_at' => now(),
-                    'remember_token' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $this->attributesForUpsert(
+                    User::factory()->demoAdmin()->make()
+                )
             );
 
-            DB::table('users')->updateOrInsert(
+            $memberUser = User::query()->updateOrCreate(
                 ['email' => 'anggota@perpus.test'],
-                [
-                    'name' => 'Anggota Demo',
-                    'password' => Hash::make('password123'),
-                    'role' => UserRole::Anggota->value,
-                    'email_verified_at' => now(),
-                    'remember_token' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $this->attributesForUpsert(
+                    User::factory()->demoMember()->make()
+                )
             );
 
-            DB::table('categories')->updateOrInsert(
+            $webCategory = Category::query()->updateOrCreate(
                 ['slug' => 'pemrograman-web'],
-                [
-                    'name' => 'Pemrograman Web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $this->attributesForUpsert(
+                    Category::factory()->webProgramming()->make()
+                )
             );
 
-            DB::table('categories')->updateOrInsert(
+            $databaseCategory = Category::query()->updateOrCreate(
                 ['slug' => 'basis-data'],
-                [
-                    'name' => 'Basis Data',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $this->attributesForUpsert(
+                    Category::factory()->database()->make()
+                )
             );
 
-            $webCategoryId = DB::table('categories')->where('slug', 'pemrograman-web')->value('id');
-            $databaseCategoryId = DB::table('categories')->where('slug', 'basis-data')->value('id');
-
-            DB::table('books')->updateOrInsert(
+            $laravelBook = Book::query()->updateOrCreate(
                 ['isbn' => '9786020000011'],
-                [
-                    'category_id' => $webCategoryId,
-                    'title' => 'Laravel untuk Sistem Informasi',
-                    'author' => 'Tim Dosen Teknik',
-                    'publisher' => 'FT Press',
-                    'year_published' => 2024,
-                    'stock' => 5,
-                    'cover_image' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $this->attributesForUpsert(
+                    Book::factory()->laravelInformationSystem()->make([
+                        'category_id' => $webCategory->getKey(),
+                    ])
+                )
             );
 
-            DB::table('books')->updateOrInsert(
+            $databaseBook = Book::query()->updateOrCreate(
                 ['isbn' => '9786020000012'],
-                [
-                    'category_id' => $databaseCategoryId,
-                    'title' => 'Desain Basis Data Perpustakaan',
-                    'author' => 'Laboratorium Data',
-                    'publisher' => 'FT Press',
-                    'year_published' => 2023,
-                    'stock' => 3,
-                    'cover_image' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $this->attributesForUpsert(
+                    Book::factory()->libraryDatabaseDesign()->make([
+                        'category_id' => $databaseCategory->getKey(),
+                    ])
+                )
             );
 
-            $memberUserId = DB::table('users')->where('email', 'anggota@perpus.test')->value('id');
-
-            DB::table('members')->updateOrInsert(
+            $member = Member::query()->updateOrCreate(
                 ['member_code' => 'AGT-0001'],
-                [
-                    'user_id' => $memberUserId,
-                    'phone' => '081234567890',
-                    'address' => 'Purwokerto',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                $this->attributesForUpsert(
+                    Member::factory()->demo()->make([
+                        'user_id' => $memberUser->getKey(),
+                    ])
+                )
             );
-
-            $memberId = DB::table('members')->where('member_code', 'AGT-0001')->value('id');
-            $firstBookId = DB::table('books')->where('isbn', '9786020000011')->value('id');
-            $secondBookId = DB::table('books')->where('isbn', '9786020000012')->value('id');
 
             DB::table('borrowings')->updateOrInsert(
                 [
-                    'member_id' => $memberId,
+                    'member_id' => $member->getKey(),
                     'borrow_date' => '2026-04-10',
                 ],
                 [
@@ -124,14 +89,14 @@ class LibraryDemoSeeder extends Seeder
                     'status' => BorrowingStatus::Dikembalikan->value,
                     'total_fine' => 2000,
                     'notes' => 'Contoh transaksi selesai',
-                    'created_at' => now(),
                     'updated_at' => now(),
+                    'created_at' => now(),
                 ]
             );
 
             DB::table('borrowings')->updateOrInsert(
                 [
-                    'member_id' => $memberId,
+                    'member_id' => $member->getKey(),
                     'borrow_date' => '2026-04-18',
                 ],
                 [
@@ -140,44 +105,58 @@ class LibraryDemoSeeder extends Seeder
                     'status' => BorrowingStatus::Dipinjam->value,
                     'total_fine' => 0,
                     'notes' => 'Contoh transaksi aktif',
-                    'created_at' => now(),
                     'updated_at' => now(),
+                    'created_at' => now(),
                 ]
             );
 
-            $completedBorrowingId = DB::table('borrowings')
-                ->where('member_id', $memberId)
+            $completedBorrowing = Borrowing::query()
+                ->where('member_id', $member->getKey())
                 ->where('borrow_date', '2026-04-10')
-                ->value('id');
+                ->firstOrFail();
 
-            $activeBorrowingId = DB::table('borrowings')
-                ->where('member_id', $memberId)
+            $activeBorrowing = Borrowing::query()
+                ->where('member_id', $member->getKey())
                 ->where('borrow_date', '2026-04-18')
-                ->value('id');
+                ->firstOrFail();
 
             DB::table('borrowing_items')->updateOrInsert(
                 [
-                    'borrowing_id' => $completedBorrowingId,
-                    'book_id' => $firstBookId,
+                    'borrowing_id' => $completedBorrowing->getKey(),
+                    'book_id' => $laravelBook->getKey(),
                 ],
                 [
                     'qty' => 1,
-                    'created_at' => now(),
                     'updated_at' => now(),
+                    'created_at' => now(),
                 ]
             );
 
             DB::table('borrowing_items')->updateOrInsert(
                 [
-                    'borrowing_id' => $activeBorrowingId,
-                    'book_id' => $secondBookId,
+                    'borrowing_id' => $activeBorrowing->getKey(),
+                    'book_id' => $databaseBook->getKey(),
                 ],
                 [
                     'qty' => 1,
-                    'created_at' => now(),
                     'updated_at' => now(),
+                    'created_at' => now(),
                 ]
             );
         });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function attributesForUpsert(Model $model): array
+    {
+        return collect($model->getAttributes())
+            ->except([
+                $model->getKeyName(),
+                $model->getCreatedAtColumn(),
+                $model->getUpdatedAtColumn(),
+            ])
+            ->all();
     }
 }
