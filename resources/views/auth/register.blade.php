@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Login | {{ config('app.name', 'Perpustakaan') }}</title>
+        <title>Register | {{ config('app.name', 'Perpustakaan') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
@@ -14,7 +14,6 @@
                 --ink: #172026;
                 --muted: #5f6d78;
                 --surface: rgba(255, 253, 249, 0.94);
-                --surface-strong: #fffaf3;
                 --field: #f6f0e8;
                 --line: rgba(23, 32, 38, 0.12);
                 --accent: #1c6b74;
@@ -48,7 +47,7 @@
             }
 
             .shell {
-                width: min(100%, 1040px);
+                width: min(100%, 1080px);
                 display: grid;
                 grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
                 background: var(--surface);
@@ -199,29 +198,6 @@
                 line-height: 1.5;
             }
 
-            .row {
-                margin-top: 18px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 16px;
-                flex-wrap: wrap;
-            }
-
-            .check {
-                display: inline-flex;
-                align-items: center;
-                gap: 10px;
-                color: var(--muted);
-                font-size: 0.95rem;
-            }
-
-            .check input {
-                width: 18px;
-                height: 18px;
-                accent-color: var(--accent);
-            }
-
             .submit {
                 width: 100%;
                 margin-top: 26px;
@@ -300,11 +276,6 @@
                 .panel {
                     padding: 28px 20px;
                 }
-
-                .row {
-                    align-items: flex-start;
-                    flex-direction: column;
-                }
             }
         </style>
     </head>
@@ -314,39 +285,53 @@
                 <section class="hero">
                     <div class="eyebrow">Perpustakaan Digital</div>
 
-                    <h1>Akses sistem pustaka dalam satu login yang rapi.</h1>
+                    <h1>Buat akun anggota baru dalam beberapa langkah singkat.</h1>
                     <p>
-                        Halaman ini memakai data dari tabel <strong>users</strong> pada `database.sql`,
-                        sehingga admin maupun anggota dapat masuk menggunakan email dan password yang sudah tersimpan.
+                        Form ini membuat data baru di tabel <strong>users</strong> dengan role default
+                        <strong>anggota</strong>, lalu langsung masuk ke dashboard setelah registrasi berhasil.
                     </p>
 
                     <div class="hero-grid">
                         <div class="hero-card">
-                            <strong>Role yang disiapkan</strong>
-                            <span>Schema sudah menampung `admin` dan `anggota`, jadi alur login siap dipakai untuk pemisahan akses berikutnya.</span>
+                            <strong>Role aman dan jelas</strong>
+                            <span>Akun yang mendaftar dari halaman ini otomatis disimpan sebagai `anggota`, jadi alur admin tetap terpisah.</span>
                         </div>
 
                         <div class="hero-card">
-                            <strong>Siap untuk Laravel session auth</strong>
-                            <span>Form ini dipasangkan ke validasi request, session regeneration, dan pembatasan percobaan login.</span>
+                            <strong>Validasi siap pakai</strong>
+                            <span>Nama, email unik, dan konfirmasi password diperiksa dulu sebelum akun dibuat ke database.</span>
                         </div>
                     </div>
                 </section>
 
                 <section class="panel">
                     <div class="panel-header">
-                        <h2>Masuk ke akun</h2>
-                        <p>Gunakan email dan password dari tabel user untuk mengakses dashboard aplikasi.</p>
+                        <h2>Daftarkan akun</h2>
+                        <p>Isi data berikut untuk membuat akun baru dan langsung memakai sistem perpustakaan.</p>
                     </div>
 
                     @if ($errors->any())
                         <div class="alert">{{ $errors->first() }}</div>
                     @endif
 
-                    <form method="POST" action="{{ route('login.store') }}">
+                    <form method="POST" action="{{ route('register.store') }}">
                         @csrf
 
                         <div class="field-group">
+                            <div class="field">
+                                <label for="name">Nama Lengkap</label>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    name="name"
+                                    value="{{ old('name') }}"
+                                    autocomplete="name"
+                                    required
+                                    autofocus
+                                >
+                                <small>Nama ini akan dipakai sebagai identitas akun di dashboard aplikasi.</small>
+                            </div>
+
                             <div class="field">
                                 <label for="email">Email</label>
                                 <input
@@ -356,9 +341,8 @@
                                     value="{{ old('email') }}"
                                     autocomplete="username"
                                     required
-                                    autofocus
                                 >
-                                <small>Contoh: `admin@perpus.test` atau email user lain yang tersimpan di tabel `users`.</small>
+                                <small>Gunakan email aktif karena nilainya harus unik pada tabel `users`.</small>
                             </div>
 
                             <div class="field">
@@ -367,28 +351,32 @@
                                     id="password"
                                     type="password"
                                     name="password"
-                                    autocomplete="current-password"
+                                    autocomplete="new-password"
                                     required
                                 >
-                                <small>Password diverifikasi dengan hashing bawaan Laravel pada kolom `password`.</small>
+                                <small>Minimal 8 karakter dan harus mengandung huruf serta angka.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="password_confirmation">Konfirmasi Password</label>
+                                <input
+                                    id="password_confirmation"
+                                    type="password"
+                                    name="password_confirmation"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                                <small>Ulangi password untuk memastikan tidak ada salah ketik saat daftar.</small>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <label class="check" for="remember">
-                                <input id="remember" type="checkbox" name="remember" value="1" @checked(old('remember'))>
-                                Ingat saya di perangkat ini
-                            </label>
-                        </div>
-
-                        <button class="submit" type="submit">Masuk ke Dashboard</button>
+                        <button class="submit" type="submit">Buat Akun dan Masuk</button>
                     </form>
 
                     <div class="panel-footer">
-                        <span>Catatan</span>
-                        Jika project memakai `SESSION_DRIVER=database`, pastikan tabel `sessions` sudah ikut dibuat dari `database.sql`.
-                        Belum punya akun?
-                        <a class="text-link" href="{{ route('register') }}">Daftar di sini</a>.
+                        <span>Masuk</span>
+                        Sudah punya akun?
+                        <a class="text-link" href="{{ route('login') }}">Kembali ke halaman login</a>.
                     </div>
                 </section>
             </div>
