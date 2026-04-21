@@ -12,10 +12,12 @@
             ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'patterns' => ['admin.dashboard']],
             ['label' => 'Anggota', 'route' => 'admin.members.index', 'patterns' => ['admin.members.*']],
             ['label' => 'Peminjaman', 'route' => 'admin.borrowings.index', 'patterns' => ['admin.borrowings.*']],
+            ['label' => 'Laporan', 'route' => 'admin.reports.borrowings', 'patterns' => ['admin.reports.borrowings*']],
             ['label' => 'Kategori Buku', 'route' => 'admin.categories.index', 'patterns' => ['admin.categories.*']],
         ]
         : [
             ['label' => 'Dashboard', 'route' => 'anggota.dashboard', 'patterns' => ['anggota.dashboard']],
+            ['label' => 'Riwayat', 'route' => 'anggota.borrowings.history', 'patterns' => ['anggota.borrowings.history']],
         ];
 @endphp
 

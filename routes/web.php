@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\BorrowingController;
+use App\Http\Controllers\Admin\BorrowingReportController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\MemberController;
+use App\Http\Controllers\Anggota\BorrowingHistoryController;
 use App\Http\Controllers\Anggota\DashboardController as AnggotaDashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -39,6 +41,10 @@ Route::middleware('auth')->group(function () {
             Route::resource('categories', CategoryController::class)->except('show');
             Route::resource('members', MemberController::class)->except('show');
             Route::resource('borrowings', BorrowingController::class)->only(['index', 'create', 'store']);
+            Route::get('/borrowings/{borrowing}/return', [BorrowingController::class, 'returnForm'])->name('borrowings.return');
+            Route::patch('/borrowings/{borrowing}/return', [BorrowingController::class, 'storeReturn'])->name('borrowings.return.store');
+            Route::get('/reports/borrowings', [BorrowingReportController::class, 'index'])->name('reports.borrowings');
+            Route::get('/reports/borrowings/pdf', [BorrowingReportController::class, 'exportPdf'])->name('reports.borrowings.pdf');
         });
 
     Route::prefix('anggota')
@@ -46,5 +52,6 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-anggota-area')
         ->group(function () {
             Route::get('/dashboard', [AnggotaDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/borrowings/history', [BorrowingHistoryController::class, 'index'])->name('borrowings.history');
         });
 });

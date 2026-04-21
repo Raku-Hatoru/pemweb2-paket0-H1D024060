@@ -1,22 +1,35 @@
 <x-layouts.app-layout
     title="Riwayat Peminjaman"
-    heading="Kelola riwayat dan transaksi peminjaman"
-    description="Admin dapat melihat seluruh riwayat peminjaman, memproses pengembalian, dan memantau denda keterlambatan dari satu halaman."
+    heading="Riwayat peminjaman saya"
+    description="Halaman ini hanya menampilkan transaksi milik akun yang sedang login, sehingga anggota bisa mengecek status pinjaman, denda, dan riwayat pengembalian tanpa melihat data anggota lain."
 >
-    <x-slot:actions>
-        <a
-            href="{{ route('admin.reports.borrowings') }}"
-            class="inline-flex items-center rounded-full border border-stone-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-stone-400 hover:bg-stone-50"
-        >
-            Lihat laporan
-        </a>
-        <a
-            href="{{ route('admin.borrowings.create') }}"
-            class="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
-            Buat peminjaman
-        </a>
-    </x-slot:actions>
+    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <article class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-5">
+            <p class="text-sm font-medium text-slate-500">Total transaksi</p>
+            <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{{ $summary['total_transactions'] }}</p>
+            <p class="mt-3 text-sm leading-6 text-slate-600">Seluruh transaksi peminjaman atas nama {{ $member->member_code }}.</p>
+        </article>
+
+        <article class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-5">
+            <p class="text-sm font-medium text-slate-500">Masih aktif</p>
+            <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{{ $summary['active_transactions'] }}</p>
+            <p class="mt-3 text-sm leading-6 text-slate-600">Transaksi yang belum memiliki tanggal pengembalian.</p>
+        </article>
+
+        <article class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-5">
+            <p class="text-sm font-medium text-slate-500">Sudah selesai</p>
+            <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{{ $summary['returned_transactions'] }}</p>
+            <p class="mt-3 text-sm leading-6 text-slate-600">Riwayat peminjaman yang sudah dikembalikan.</p>
+        </article>
+
+        <article class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-5">
+            <p class="text-sm font-medium text-slate-500">Total denda</p>
+            <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                Rp {{ number_format($summary['total_fine'], thousands_separator: '.') }}
+            </p>
+            <p class="mt-3 text-sm leading-6 text-slate-600">Akumulasi denda dari seluruh histori peminjaman.</p>
+        </article>
+    </section>
 
     <section class="space-y-4">
         @forelse ($borrowings as $borrowing)
@@ -32,18 +45,18 @@
 
             <article class="rounded-[1.75rem] border border-stone-200 bg-white p-6">
                 <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                    <div class="space-y-3">
+                    <div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <h3 class="text-lg font-semibold text-slate-950">{{ $borrowing->member->user->name }}</h3>
+                            <h3 class="text-lg font-semibold text-slate-950">Transaksi #{{ $borrowing->id }}</h3>
                             <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] {{ $statusClasses }}">
                                 {{ $displayStatus->value }}
                             </span>
                         </div>
-                        <p class="text-sm leading-6 text-slate-500">
-                            {{ $borrowing->member->member_code }} / Pinjam {{ $borrowing->borrow_date->format('d M Y') }} / Jatuh tempo {{ $borrowing->due_date->format('d M Y') }}
+                        <p class="mt-2 text-sm leading-6 text-slate-500">
+                            Pinjam {{ $borrowing->borrow_date->format('d M Y') }} / Jatuh tempo {{ $borrowing->due_date->format('d M Y') }}
                         </p>
                         @if ($borrowing->notes)
-                            <p class="text-sm leading-6 text-slate-600">{{ $borrowing->notes }}</p>
+                            <p class="mt-3 text-sm leading-6 text-slate-600">{{ $borrowing->notes }}</p>
                         @endif
                     </div>
 
@@ -64,7 +77,7 @@
                                 @if ($borrowing->return_date)
                                     {{ $borrowing->return_date->format('d M Y') }}
                                 @else
-                                    Menunggu pengembalian
+                                    Belum dikembalikan
                                 @endif
                             </p>
                         </div>
@@ -73,7 +86,7 @@
 
                 @if ($lateDays > 0)
                     <div class="mt-5 rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
-                        Terlambat {{ $lateDays }} hari. Jika dikembalikan hari ini, denda menjadi
+                        Pinjaman ini terlambat {{ $lateDays }} hari. Estimasi denda saat ini:
                         Rp {{ number_format($borrowing->fineFor(now()), thousands_separator: '.') }}.
                     </div>
                 @endif
@@ -85,25 +98,10 @@
                         </span>
                     @endforeach
                 </div>
-
-                <div class="mt-5 flex flex-wrap items-center gap-3">
-                    @if ($borrowing->canBeReturned())
-                        <a
-                            href="{{ route('admin.borrowings.return', $borrowing) }}"
-                            class="inline-flex items-center rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                        >
-                            Proses pengembalian
-                        </a>
-                    @else
-                        <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700">
-                            Transaksi selesai
-                        </span>
-                    @endif
-                </div>
             </article>
         @empty
             <div class="rounded-[1.75rem] border border-dashed border-stone-300 bg-stone-50 p-8 text-sm leading-7 text-slate-500">
-                Belum ada transaksi peminjaman. Gunakan tombol di atas untuk membuat transaksi baru.
+                Belum ada riwayat peminjaman untuk akun ini.
             </div>
         @endforelse
 

@@ -53,6 +53,36 @@ class BorrowingManagementTest extends TestCase
             ->assertDontSee($emptyBook->title);
     }
 
+    public function test_admin_can_view_all_borrowing_history_records(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $category = Category::factory()->create();
+        $book = Book::factory()->for($category)->create([
+            'stock' => 10,
+        ]);
+        $memberOne = Member::factory()->for(User::factory()->state([
+            'name' => 'Aulia Riwayat',
+        ]))->create();
+        $memberTwo = Member::factory()->for(User::factory()->state([
+            'name' => 'Bima Riwayat',
+        ]))->create();
+
+        $borrowingOne = $this->createBorrowingWithBook($memberOne, $book, [
+            'notes' => 'Riwayat Aulia',
+        ]);
+        $borrowingTwo = $this->createBorrowingWithBook($memberTwo, $book, [
+            'notes' => 'Riwayat Bima',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.borrowings.index'));
+
+        $response->assertOk()
+            ->assertSee($borrowingOne->member->user->name)
+            ->assertSee($borrowingTwo->member->user->name)
+            ->assertSee('Riwayat Aulia')
+            ->assertSee('Riwayat Bima');
+    }
+
     public function test_admin_can_store_multi_book_borrowing_and_reduce_stock(): void
     {
         $admin = User::factory()->admin()->create();
@@ -87,6 +117,53 @@ class BorrowingManagementTest extends TestCase
         $this->assertSame(2, $borrowing->borrowingItems->count());
         $this->assertSame(2, $bookOne->fresh()->stock);
         $this->assertSame(0, $bookTwo->fresh()->stock);
+    }
+
+    public function test_admin_can_process_return_and_restore_book_stock(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $category = Category::factory()->create();
+        $member = Member::factory()->create();
+        $book = Book::factory()->for($category)->create([
+            'stock' => 1,
+        ]);
+
+        $borrowing = Borrowing::factory()->for($member)->create([
+            'borrow_date' => '2026-04-01',
+            'due_date' => '2026-04-08',
+            'return_date' => null,
+            'status' => BorrowingStatus::Dipinjam,
+            'total_fine' => 0,
+        ]);
+
+        BorrowingItem::factory()->for($borrowing)->for($book)->create([
+            'qty' => 2,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->patch(route('admin.borrowings.return.store', $borrowing), [
+                'return_date' => '2026-04-10',
+            ]);
+
+        $response->assertRedirect(route('admin.borrowings.index', absolute: false));
+
+        $borrowing->refresh();
+
+        $this->assertSame(BorrowingStatus::Dikembalikan, $borrowing->status);
+        $this->assertSame('2026-04-10', $borrowing->return_date?->toDateString());
+        $this->assertSame(2000, $borrowing->total_fine);
+        $this->assertSame(3, $book->fresh()->stock);
+    }
+
+    public function test_completed_borrowings_cannot_open_the_return_form(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $member = Member::factory()->create();
+        $borrowing = Borrowing::factory()->for($member)->returned()->create();
+
+        $response = $this->actingAs($admin)->get(route('admin.borrowings.return', $borrowing));
+
+        $response->assertNotFound();
     }
 
     public function test_member_cannot_have_more_than_three_active_books(): void
@@ -176,5 +253,20 @@ class BorrowingManagementTest extends TestCase
         $response->assertRedirect(route('admin.borrowings.create'));
         $response->assertSessionHasErrors('items');
         $this->assertSame(1, $book->fresh()->stock);
+    }
+
+    private function createBorrowingWithBook(
+        Member $member,
+        Book $book,
+        array $borrowingAttributes = [],
+        int $qty = 1
+    ): Borrowing {
+        $borrowing = Borrowing::factory()->for($member)->create($borrowingAttributes);
+
+        BorrowingItem::factory()->for($borrowing)->for($book)->create([
+            'qty' => $qty,
+        ]);
+
+        return $borrowing;
     }
 }

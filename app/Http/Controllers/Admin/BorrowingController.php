@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\BorrowingStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReturnBorrowingRequest;
 use App\Http\Requests\StoreBorrowingRequest;
 use App\Models\Book;
 use App\Models\Borrowing;
@@ -37,7 +38,8 @@ class BorrowingController extends Controller
                     'member:id,user_id,member_code',
                     'member.user:id,name',
                     'borrowingItems:id,borrowing_id,book_id,qty',
-                    'borrowingItems.book:id,title',
+                    'borrowingItems.book:id,title,category_id',
+                    'borrowingItems.book.category:id,name',
                 ])
                 ->withSum('borrowingItems as total_books', 'qty')
                 ->latest('borrow_date')
@@ -178,5 +180,80 @@ class BorrowingController extends Controller
         return redirect()
             ->route('admin.borrowings.index')
             ->with('status', 'Transaksi peminjaman berhasil disimpan.');
+    }
+
+    /**
+     * Show the return form for the specified borrowing.
+     */
+    public function returnForm(Borrowing $borrowing): View
+    {
+        abort_if(! $borrowing->canBeReturned(), 404);
+
+        $borrowing->load([
+            'member:id,user_id,member_code',
+            'member.user:id,name,email',
+            'borrowingItems:id,borrowing_id,book_id,qty',
+            'borrowingItems.book:id,title,stock',
+        ]);
+
+        $defaultReturnDate = now();
+
+        return view('admin.borrowings.return', [
+            'borrowing' => $borrowing,
+            'defaultReturnDate' => $defaultReturnDate->toDateString(),
+            'defaultLateDays' => $borrowing->lateDaysFor($defaultReturnDate),
+            'defaultFine' => $borrowing->fineFor($defaultReturnDate),
+        ]);
+    }
+
+    /**
+     * Store the return for the specified borrowing.
+     *
+     * @throws ValidationException
+     */
+    public function storeReturn(ReturnBorrowingRequest $request, Borrowing $borrowing): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        DB::transaction(function () use ($borrowing, $validated): void {
+            $lockedBorrowing = Borrowing::query()
+                ->whereKey($borrowing->getKey())
+                ->with(['borrowingItems:id,borrowing_id,book_id,qty'])
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedBorrowing->canBeReturned()) {
+                throw ValidationException::withMessages([
+                    'return_date' => 'Transaksi ini sudah dikembalikan sebelumnya.',
+                ]);
+            }
+
+            $returnDate = Carbon::parse($validated['return_date']);
+            $lockedBooks = Book::query()
+                ->select(['id', 'stock'])
+                ->whereIn('id', $lockedBorrowing->borrowingItems->pluck('book_id'))
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $lockedBorrowing->borrowingItems->each(function ($item) use ($lockedBooks): void {
+                /** @var Book|null $book */
+                $book = $lockedBooks->get($item->book_id);
+
+                if ($book) {
+                    $book->increment('stock', $item->qty);
+                }
+            });
+
+            $lockedBorrowing->update([
+                'return_date' => $returnDate->toDateString(),
+                'status' => $lockedBorrowing->resolvedStatusFor($returnDate),
+                'total_fine' => $lockedBorrowing->fineFor($returnDate),
+            ]);
+        }, attempts: 5);
+
+        return redirect()
+            ->route('admin.borrowings.index')
+            ->with('status', 'Pengembalian buku berhasil disimpan.');
     }
 }

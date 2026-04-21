@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\BorrowingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\Borrowing;
@@ -19,28 +18,38 @@ class DashboardController extends Controller
      */
     public function index(): View
     {
+        $borrowedBooksCount = (int) Borrowing::query()
+            ->whereNull('return_date')
+            ->join('borrowing_items', 'borrowings.id', '=', 'borrowing_items.borrowing_id')
+            ->sum('borrowing_items.qty');
+
+        $totalBooks = (int) Book::query()->sum('stock') + $borrowedBooksCount;
+        $totalMembers = (int) Member::query()->count();
+        $currentMonthFine = (int) Borrowing::query()
+            ->whereNotNull('return_date')
+            ->whereBetween('return_date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])
+            ->sum('total_fine');
+
         $stats = [
             [
-                'label' => 'Total kategori',
-                'value' => Category::query()->count(),
-                'description' => 'Fondasi klasifikasi buku dan filter laporan.',
+                'label' => 'Total buku',
+                'value' => number_format($totalBooks, thousands_separator: '.'),
+                'description' => 'Total eksemplar koleksi perpustakaan, termasuk yang sedang dipinjam.',
             ],
             [
-                'label' => 'Judul buku',
-                'value' => Book::query()->count(),
-                'description' => 'Jumlah data buku yang siap dikelola admin.',
+                'label' => 'Buku sedang dipinjam',
+                'value' => number_format($borrowedBooksCount, thousands_separator: '.'),
+                'description' => 'Total eksemplar yang sedang keluar dan belum kembali.',
             ],
             [
-                'label' => 'Anggota aktif',
-                'value' => Member::query()->count(),
-                'description' => 'Profil anggota yang sudah tersambung ke akun login.',
+                'label' => 'Total anggota',
+                'value' => number_format($totalMembers, thousands_separator: '.'),
+                'description' => 'Anggota perpustakaan yang sudah punya akun dan profil lengkap.',
             ],
             [
-                'label' => 'Peminjaman berjalan',
-                'value' => Borrowing::query()
-                    ->whereIn('status', [BorrowingStatus::Dipinjam, BorrowingStatus::Terlambat])
-                    ->count(),
-                'description' => 'Transaksi yang masih perlu dipantau sampai pengembalian.',
+                'label' => 'Denda bulan ini',
+                'value' => 'Rp '.number_format($currentMonthFine, thousands_separator: '.'),
+                'description' => 'Akumulasi denda dari transaksi yang selesai pada bulan berjalan.',
             ],
         ];
 

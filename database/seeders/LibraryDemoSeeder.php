@@ -23,7 +23,7 @@ class LibraryDemoSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function (): void {
-            User::query()->updateOrCreate(
+            $admin = User::query()->updateOrCreate(
                 ['email' => 'admin@perpus.test'],
                 $this->attributesForUpsert(
                     User::factory()->demoAdmin()->make()
@@ -34,6 +34,16 @@ class LibraryDemoSeeder extends Seeder
                 ['email' => 'anggota@perpus.test'],
                 $this->attributesForUpsert(
                     User::factory()->demoMember()->make()
+                )
+            );
+
+            $presentationUser = User::query()->updateOrCreate(
+                ['email' => 'anggota2@perpus.test'],
+                $this->attributesForUpsert(
+                    User::factory()->demoMember()->make([
+                        'name' => 'Anggota Presentasi',
+                        'email' => 'anggota2@perpus.test',
+                    ])
                 )
             );
 
@@ -51,11 +61,22 @@ class LibraryDemoSeeder extends Seeder
                 )
             );
 
+            $managementCategory = Category::query()->updateOrCreate(
+                ['slug' => 'manajemen-perpustakaan'],
+                $this->attributesForUpsert(
+                    Category::factory()->make([
+                        'name' => 'Manajemen Perpustakaan',
+                        'slug' => 'manajemen-perpustakaan',
+                    ])
+                )
+            );
+
             $laravelBook = Book::query()->updateOrCreate(
                 ['isbn' => '9786020000011'],
                 $this->attributesForUpsert(
                     Book::factory()->laravelInformationSystem()->make([
                         'category_id' => $webCategory->getKey(),
+                        'stock' => 5,
                     ])
                 )
             );
@@ -65,6 +86,55 @@ class LibraryDemoSeeder extends Seeder
                 $this->attributesForUpsert(
                     Book::factory()->libraryDatabaseDesign()->make([
                         'category_id' => $databaseCategory->getKey(),
+                        'stock' => 1,
+                    ])
+                )
+            );
+
+            $uiBook = Book::query()->updateOrCreate(
+                ['isbn' => '9786020000013'],
+                $this->attributesForUpsert(
+                    Book::factory()->make([
+                        'category_id' => $webCategory->getKey(),
+                        'isbn' => '9786020000013',
+                        'title' => 'UI Sistem Informasi Kampus',
+                        'author' => 'Studio Interaksi',
+                        'publisher' => 'FT Press',
+                        'year_published' => 2025,
+                        'stock' => 2,
+                        'cover_image' => null,
+                    ])
+                )
+            );
+
+            $managementBook = Book::query()->updateOrCreate(
+                ['isbn' => '9786020000014'],
+                $this->attributesForUpsert(
+                    Book::factory()->make([
+                        'category_id' => $managementCategory->getKey(),
+                        'isbn' => '9786020000014',
+                        'title' => 'Operasional Perpustakaan Modern',
+                        'author' => 'Ruang Referensi',
+                        'publisher' => 'FT Press',
+                        'year_published' => 2022,
+                        'stock' => 0,
+                        'cover_image' => null,
+                    ])
+                )
+            );
+
+            $analysisBook = Book::query()->updateOrCreate(
+                ['isbn' => '9786020000015'],
+                $this->attributesForUpsert(
+                    Book::factory()->make([
+                        'category_id' => $managementCategory->getKey(),
+                        'isbn' => '9786020000015',
+                        'title' => 'Analisis Sistem Perpustakaan',
+                        'author' => 'Tim Laboratorium',
+                        'publisher' => 'FT Press',
+                        'year_published' => 2024,
+                        'stock' => 3,
+                        'cover_image' => null,
                     ])
                 )
             );
@@ -78,57 +148,112 @@ class LibraryDemoSeeder extends Seeder
                 )
             );
 
-            DB::table('borrowings')->updateOrInsert(
+            $presentationMember = Member::query()->updateOrCreate(
+                ['member_code' => 'AGT-0002'],
+                $this->attributesForUpsert(
+                    Member::factory()->make([
+                        'user_id' => $presentationUser->getKey(),
+                        'member_code' => 'AGT-0002',
+                        'phone' => '081234560002',
+                        'address' => 'Purwokerto Utara',
+                    ])
+                )
+            );
+
+            $lateBorrowDate = now()->startOfMonth()->addDays(3);
+            $lateDueDate = $lateBorrowDate->copy()->addDays(7);
+            $lateReturnDate = $lateDueDate->copy()->addDays(2);
+
+            $onTimeBorrowDate = now()->startOfMonth()->addDays(7);
+            $onTimeDueDate = $onTimeBorrowDate->copy()->addDays(7);
+            $onTimeReturnDate = $onTimeDueDate->copy();
+
+            $activeBorrowDate = now()->subDays(3);
+            $activeDueDate = $activeBorrowDate->copy()->addDays(7);
+
+            $overdueBorrowDate = now()->subDays(11);
+            $overdueDueDate = $overdueBorrowDate->copy()->addDays(7);
+            $overdueFine = $overdueDueDate->diffInDays(now()) * 1000;
+
+            $completedLateBorrowing = Borrowing::query()->updateOrCreate(
                 [
                     'member_id' => $member->getKey(),
-                    'borrow_date' => '2026-04-10',
+                    'borrow_date' => $lateBorrowDate->toDateString(),
                 ],
                 [
-                    'due_date' => '2026-04-17',
-                    'return_date' => '2026-04-19',
+                    'due_date' => $lateDueDate->toDateString(),
+                    'return_date' => $lateReturnDate->toDateString(),
                     'status' => BorrowingStatus::Dikembalikan->value,
                     'total_fine' => 2000,
-                    'notes' => 'Contoh transaksi selesai',
-                    'updated_at' => now(),
-                    'created_at' => now(),
+                    'notes' => 'Demo laporan: selesai terlambat 2 hari.',
                 ]
             );
 
-            DB::table('borrowings')->updateOrInsert(
+            $completedOnTimeBorrowing = Borrowing::query()->updateOrCreate(
                 [
-                    'member_id' => $member->getKey(),
-                    'borrow_date' => '2026-04-18',
+                    'member_id' => $presentationMember->getKey(),
+                    'borrow_date' => $onTimeBorrowDate->toDateString(),
                 ],
                 [
-                    'due_date' => '2026-04-25',
+                    'due_date' => $onTimeDueDate->toDateString(),
+                    'return_date' => $onTimeReturnDate->toDateString(),
+                    'status' => BorrowingStatus::Dikembalikan->value,
+                    'total_fine' => 0,
+                    'notes' => 'Demo laporan: selesai tepat waktu.',
+                ]
+            );
+
+            $activeBorrowing = Borrowing::query()->updateOrCreate(
+                [
+                    'member_id' => $member->getKey(),
+                    'borrow_date' => $activeBorrowDate->toDateString(),
+                ],
+                [
+                    'due_date' => $activeDueDate->toDateString(),
                     'return_date' => null,
                     'status' => BorrowingStatus::Dipinjam->value,
                     'total_fine' => 0,
-                    'notes' => 'Contoh transaksi aktif',
-                    'updated_at' => now(),
-                    'created_at' => now(),
+                    'notes' => 'Demo riwayat: masih dipinjam dan belum jatuh tempo.',
                 ]
             );
 
-            $completedBorrowing = Borrowing::query()
-                ->where('member_id', $member->getKey())
-                ->where('borrow_date', '2026-04-10')
-                ->firstOrFail();
+            $overdueBorrowing = Borrowing::query()->updateOrCreate(
+                [
+                    'member_id' => $presentationMember->getKey(),
+                    'borrow_date' => $overdueBorrowDate->toDateString(),
+                ],
+                [
+                    'due_date' => $overdueDueDate->toDateString(),
+                    'return_date' => null,
+                    'status' => BorrowingStatus::Terlambat->value,
+                    'total_fine' => $overdueFine,
+                    'notes' => 'Demo pengembalian: terlambat dan siap diproses real-time.',
+                ]
+            );
 
-            $activeBorrowing = Borrowing::query()
-                ->where('member_id', $member->getKey())
-                ->where('borrow_date', '2026-04-18')
-                ->firstOrFail();
+            $timestamp = now();
 
             DB::table('borrowing_items')->updateOrInsert(
                 [
-                    'borrowing_id' => $completedBorrowing->getKey(),
+                    'borrowing_id' => $completedLateBorrowing->getKey(),
                     'book_id' => $laravelBook->getKey(),
                 ],
                 [
                     'qty' => 1,
-                    'updated_at' => now(),
-                    'created_at' => now(),
+                    'updated_at' => $timestamp,
+                    'created_at' => $timestamp,
+                ]
+            );
+
+            DB::table('borrowing_items')->updateOrInsert(
+                [
+                    'borrowing_id' => $completedOnTimeBorrowing->getKey(),
+                    'book_id' => $analysisBook->getKey(),
+                ],
+                [
+                    'qty' => 1,
+                    'updated_at' => $timestamp,
+                    'created_at' => $timestamp,
                 ]
             );
 
@@ -139,8 +264,32 @@ class LibraryDemoSeeder extends Seeder
                 ],
                 [
                     'qty' => 1,
-                    'updated_at' => now(),
-                    'created_at' => now(),
+                    'updated_at' => $timestamp,
+                    'created_at' => $timestamp,
+                ]
+            );
+
+            DB::table('borrowing_items')->updateOrInsert(
+                [
+                    'borrowing_id' => $activeBorrowing->getKey(),
+                    'book_id' => $uiBook->getKey(),
+                ],
+                [
+                    'qty' => 1,
+                    'updated_at' => $timestamp,
+                    'created_at' => $timestamp,
+                ]
+            );
+
+            DB::table('borrowing_items')->updateOrInsert(
+                [
+                    'borrowing_id' => $overdueBorrowing->getKey(),
+                    'book_id' => $managementBook->getKey(),
+                ],
+                [
+                    'qty' => 1,
+                    'updated_at' => $timestamp,
+                    'created_at' => $timestamp,
                 ]
             );
         });

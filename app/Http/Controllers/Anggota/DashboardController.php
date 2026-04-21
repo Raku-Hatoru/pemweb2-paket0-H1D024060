@@ -67,6 +67,11 @@ class DashboardController extends Controller
             'member' => $member,
             'memberStats' => $memberStats,
             'borrowings' => $borrowings,
+            'activeBooks' => $member instanceof Member
+                ? (int) $member->borrowingItems()
+                    ->whereHas('borrowing', fn ($query) => $query->active())
+                    ->sum('qty')
+                : 0,
         ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\BorrowingStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\BorrowingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -49,6 +50,50 @@ class Borrowing extends Model
             BorrowingStatus::Dipinjam->value,
             BorrowingStatus::Terlambat->value,
         ]);
+    }
+
+    public function isReturned(): bool
+    {
+        return $this->return_date !== null || $this->status === BorrowingStatus::Dikembalikan;
+    }
+
+    public function canBeReturned(): bool
+    {
+        return ! $this->isReturned();
+    }
+
+    public function displayStatus(?CarbonInterface $referenceDate = null): BorrowingStatus
+    {
+        if ($this->isReturned()) {
+            return BorrowingStatus::Dikembalikan;
+        }
+
+        $currentDate = $referenceDate ?? now();
+
+        if ($currentDate->greaterThan($this->due_date)) {
+            return BorrowingStatus::Terlambat;
+        }
+
+        return BorrowingStatus::Dipinjam;
+    }
+
+    public function lateDaysFor(CarbonInterface $returnDate): int
+    {
+        if ($returnDate->lessThanOrEqualTo($this->due_date)) {
+            return 0;
+        }
+
+        return $this->due_date->diffInDays($returnDate);
+    }
+
+    public function fineFor(CarbonInterface $returnDate): int
+    {
+        return $this->lateDaysFor($returnDate) * 1000;
+    }
+
+    public function resolvedStatusFor(CarbonInterface $returnDate): BorrowingStatus
+    {
+        return BorrowingStatus::Dikembalikan;
     }
 
     /**
