@@ -33,7 +33,7 @@ class RegisterTest extends TestCase
 
         $this->assertNotNull($user);
         $this->assertAuthenticatedAs($user);
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('anggota.dashboard', absolute: false));
         $this->assertDatabaseHas('users', [
             'name' => 'Anggota Baru',
             'email' => 'anggota@perpus.test',
