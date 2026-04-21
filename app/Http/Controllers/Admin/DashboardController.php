@@ -69,11 +69,23 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $membersNeedingAttention = Member::query()
+            ->select(['id', 'user_id', 'member_code'])
+            ->whereHas('borrowings', fn ($query) => $query->active())
+            ->with(['user:id,name'])
+            ->withCount([
+                'borrowings as active_borrowings_count' => fn ($query) => $query->active(),
+            ])
+            ->ordered()
+            ->limit(5)
+            ->get();
+
         return view('admin.dashboard', [
             'stats' => $stats,
             'recentBorrowings' => $recentBorrowings,
             'latestCategories' => $latestCategories,
             'recentMembers' => $recentMembers,
+            'membersNeedingAttention' => $membersNeedingAttention,
         ]);
     }
 }

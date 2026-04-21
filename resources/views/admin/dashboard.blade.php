@@ -5,6 +5,18 @@
 >
     <x-slot:actions>
         <a
+            href="{{ route('admin.borrowings.create') }}"
+            class="inline-flex items-center rounded-full border border-stone-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-stone-400 hover:bg-stone-50"
+        >
+            Buat peminjaman
+        </a>
+        <a
+            href="{{ route('admin.members.create') }}"
+            class="inline-flex items-center rounded-full border border-stone-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-stone-400 hover:bg-stone-50"
+        >
+            Tambah anggota
+        </a>
+        <a
             href="{{ route('admin.categories.create') }}"
             class="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
@@ -92,6 +104,24 @@
                     @empty
                         <p class="rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-4 py-4 text-sm text-slate-500">
                             Belum ada anggota yang terdaftar.
+                        </p>
+                    @endforelse
+                </div>
+            </article>
+
+            <article class="rounded-[1.75rem] border border-stone-200 bg-white p-6">
+                <h3 class="text-lg font-semibold text-slate-950">Anggota dengan pinjaman aktif</h3>
+                <p class="mt-1 text-sm text-slate-500">Ringkasan cepat agar admin mudah melihat siapa yang sedang meminjam buku.</p>
+
+                <div class="mt-6 space-y-3">
+                    @forelse ($membersNeedingAttention as $member)
+                        <div class="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
+                            <p class="font-medium text-slate-950">{{ $member->user->name }}</p>
+                            <p class="mt-1 text-sm text-slate-500">{{ $member->member_code }} • {{ $member->active_borrowings_count }} transaksi aktif</p>
+                        </div>
+                    @empty
+                        <p class="rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-4 py-4 text-sm text-slate-500">
+                            Tidak ada anggota dengan pinjaman aktif saat ini.
                         </p>
                     @endforelse
                 </div>

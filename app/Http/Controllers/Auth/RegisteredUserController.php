@@ -38,7 +38,7 @@ class RegisteredUserController extends Controller
 
             Member::create([
                 'user_id' => $user->getKey(),
-                'member_code' => $this->nextMemberCode(),
+                'member_code' => Member::nextMemberCode(),
             ]);
 
             return $user;
@@ -51,17 +51,5 @@ class RegisteredUserController extends Controller
         $request->session()->regenerate();
 
         return redirect()->intended(route($user->dashboardRouteName(), absolute: false));
-    }
-
-    private function nextMemberCode(): string
-    {
-        $sequence = (Member::query()->max('id') ?? 0) + 1;
-
-        do {
-            $memberCode = 'AGT-'.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
-            $sequence++;
-        } while (Member::query()->where('member_code', $memberCode)->exists());
-
-        return $memberCode;
     }
 }

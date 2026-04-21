@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\BorrowingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Anggota\DashboardController as AnggotaDashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -35,6 +37,8 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
             Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
             Route::resource('categories', CategoryController::class)->except('show');
+            Route::resource('members', MemberController::class)->except('show');
+            Route::resource('borrowings', BorrowingController::class)->only(['index', 'create', 'store']);
         });
 
     Route::prefix('anggota')

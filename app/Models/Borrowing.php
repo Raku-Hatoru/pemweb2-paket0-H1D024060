@@ -5,6 +5,7 @@ namespace App\Models;
 use App\BorrowingStatus;
 use Database\Factories\BorrowingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +41,14 @@ class Borrowing extends Model
         return $this->belongsToMany(Book::class, 'borrowing_items')
             ->withPivot('id', 'qty')
             ->withTimestamps();
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            BorrowingStatus::Dipinjam->value,
+            BorrowingStatus::Terlambat->value,
+        ]);
     }
 
     /**

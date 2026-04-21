@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\BookFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +41,11 @@ class Book extends Model
         return $this->belongsToMany(Borrowing::class, 'borrowing_items')
             ->withPivot('id', 'qty')
             ->withTimestamps();
+    }
+
+    public function scopeAvailable(Builder $query): Builder
+    {
+        return $query->where('stock', '>', 0);
     }
 
     /**

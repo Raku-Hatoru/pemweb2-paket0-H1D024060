@@ -10,6 +10,8 @@
     $navigation = $user?->isAdmin()
         ? [
             ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'patterns' => ['admin.dashboard']],
+            ['label' => 'Anggota', 'route' => 'admin.members.index', 'patterns' => ['admin.members.*']],
+            ['label' => 'Peminjaman', 'route' => 'admin.borrowings.index', 'patterns' => ['admin.borrowings.*']],
             ['label' => 'Kategori Buku', 'route' => 'admin.categories.index', 'patterns' => ['admin.categories.*']],
         ]
         : [
