@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -30,8 +31,10 @@ class RegisterTest extends TestCase
         ]);
 
         $user = User::query()->where('email', 'anggota@perpus.test')->first();
+        $member = Member::query()->where('user_id', $user?->getKey())->first();
 
         $this->assertNotNull($user);
+        $this->assertNotNull($member);
         $this->assertAuthenticatedAs($user);
         $response->assertRedirect(route('anggota.dashboard', absolute: false));
         $this->assertDatabaseHas('users', [
@@ -39,6 +42,7 @@ class RegisterTest extends TestCase
             'email' => 'anggota@perpus.test',
             'role' => 'anggota',
         ]);
+        $this->assertMatchesRegularExpression('/^AGT-\d{4}$/', $member->member_code);
     }
 
     public function test_registration_requires_a_unique_email_address(): void

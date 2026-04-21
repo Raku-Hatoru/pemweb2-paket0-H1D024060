@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Anggota\DashboardController as AnggotaDashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Models\User;
@@ -16,17 +19,28 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 });
 
-Route::get('/dashboard', function (Request $request): RedirectResponse {
-    /** @var User $user */
-    $user = $request->user();
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    return redirect(route($user->dashboardRouteName(), absolute: false));
-})->middleware('auth')->name('dashboard');
+    Route::get('/dashboard', function (Request $request): RedirectResponse {
+        /** @var User $user */
+        $user = $request->user();
 
-Route::view('/admin/dashboard', 'welcome')
-    ->middleware(['auth', 'can:access-admin-area'])
-    ->name('admin.dashboard');
+        return redirect(route($user->dashboardRouteName(), absolute: false));
+    })->name('dashboard');
 
-Route::view('/anggota/dashboard', 'welcome')
-    ->middleware(['auth', 'can:access-anggota-area'])
-    ->name('anggota.dashboard');
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware('can:access-admin-area')
+        ->group(function () {
+            Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+            Route::resource('categories', CategoryController::class)->except('show');
+        });
+
+    Route::prefix('anggota')
+        ->name('anggota.')
+        ->middleware('can:access-anggota-area')
+        ->group(function () {
+            Route::get('/dashboard', [AnggotaDashboardController::class, 'index'])->name('dashboard');
+        });
+});
