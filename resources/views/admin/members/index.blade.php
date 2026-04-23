@@ -1,7 +1,6 @@
 <x-layouts.app-layout
     title="Data Anggota"
     heading="Kelola data anggota"
-    description="Data anggota disimpan sebagai kombinasi akun login pada tabel `users` dan profil perpustakaan pada tabel `members`, sehingga transaksi peminjaman selalu punya konteks anggota yang jelas."
 >
     <x-slot:actions>
         <a

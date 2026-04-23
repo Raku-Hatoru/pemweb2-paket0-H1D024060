@@ -85,16 +85,6 @@ php artisan optimize:clear
 - Version-friendly reporting: export PDF memakai generator internal project, jadi tidak perlu menambah dependency baru.
 - Feature-test oriented: auth, CRUD, peminjaman, pengembalian, validasi stok, batas 3 buku, riwayat, dan laporan ditutup dengan feature test PHPUnit.
 
-## Presentation Scenario
-
-1. Login sebagai admin menggunakan `admin@perpus.test`.
-2. Buka dashboard untuk menunjukkan total buku, buku sedang dipinjam, total anggota, dan denda bulan ini.
-3. Masuk ke menu `Peminjaman` untuk menunjukkan bahwa admin bisa melihat seluruh riwayat transaksi.
-4. Pilih transaksi yang terlambat lalu buka `Proses pengembalian` untuk menunjukkan denda real-time `Rp 1.000 x hari terlambat`.
-5. Simpan pengembalian dan tunjukkan bahwa status berubah, `return_date` terisi, dan stok buku kembali.
-6. Buka menu `Laporan`, filter bulan berjalan, lalu klik `Export PDF`.
-7. Logout lalu login sebagai `anggota@perpus.test` untuk menunjukkan bahwa anggota hanya bisa melihat riwayat miliknya sendiri.
-
 ## Test commands
 
 Contoh perintah yang paling relevan saat development:

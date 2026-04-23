@@ -42,9 +42,7 @@
                         <div class="border-b border-white/10 px-6 py-6">
                             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-teal-200/80">Perpustakaan Digital</p>
                             <h1 class="mt-3 text-2xl font-semibold leading-tight">Panel {{ $user?->isAdmin() ? 'Admin' : 'Anggota' }}</h1>
-                            <p class="mt-3 text-sm leading-6 text-slate-300">
-                                Alur utama sudah dipisah per role agar fitur berikutnya bisa ditambah tanpa mencampur hak akses.
-                            </p>
+
                         </div>
 
                         <nav class="flex-1 space-y-2 px-4 py-5">

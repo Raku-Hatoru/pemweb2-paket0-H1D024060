@@ -315,28 +315,14 @@
                     <div class="eyebrow">Perpustakaan Digital</div>
 
                     <h1>Akses sistem pustaka dalam satu login yang rapi.</h1>
-                    <p>
-                        Halaman ini memakai data dari tabel <strong>users</strong> pada `database.sql`,
-                        sehingga admin maupun anggota dapat masuk menggunakan email dan password yang sudah tersimpan.
-                    </p>
 
-                    <div class="hero-grid">
-                        <div class="hero-card">
-                            <strong>Role yang disiapkan</strong>
-                            <span>Schema sudah menampung `admin` dan `anggota`, jadi alur login siap dipakai untuk pemisahan akses berikutnya.</span>
-                        </div>
 
-                        <div class="hero-card">
-                            <strong>Siap untuk Laravel session auth</strong>
-                            <span>Form ini dipasangkan ke validasi request, session regeneration, dan pembatasan percobaan login.</span>
-                        </div>
-                    </div>
                 </section>
 
                 <section class="panel">
                     <div class="panel-header">
                         <h2>Masuk ke akun</h2>
-                        <p>Gunakan email dan password dari tabel user untuk mengakses dashboard aplikasi.</p>
+                        <p>Gunakan email dan password yang benar untuk mengakses dashboard aplikasi.</p>
                     </div>
 
                     @if ($errors->any())
@@ -358,7 +344,6 @@
                                     required
                                     autofocus
                                 >
-                                <small>Contoh: `admin@perpus.test` atau email user lain yang tersimpan di tabel `users`.</small>
                             </div>
 
                             <div class="field">
@@ -370,7 +355,6 @@
                                     autocomplete="current-password"
                                     required
                                 >
-                                <small>Password diverifikasi dengan hashing bawaan Laravel pada kolom `password`.</small>
                             </div>
                         </div>
 
@@ -385,8 +369,6 @@
                     </form>
 
                     <div class="panel-footer">
-                        <span>Catatan</span>
-                        Jika project memakai `SESSION_DRIVER=database`, pastikan tabel `sessions` sudah ikut dibuat dari `database.sql`.
                         Belum punya akun?
                         <a class="text-link" href="{{ route('register') }}">Daftar di sini</a>.
                     </div>
